@@ -7,6 +7,7 @@ log.info """\
  nextera     : ${params.nextera}
  ref        : ${params.ref}
  fastqDir   : ${params.fastqDir}
+ havocSh   : ${params.havocSh}
  """
 
 
@@ -16,8 +17,9 @@ process runHavoc {
 	path 'NexteraPE-PE.fa' from params.nextera
 	path 'ref.fa' from params.ref
 	path fastqDir from params.fastqDir
+	path havocSh from params.havocSh
 
 	"""
-	sh HAVoC.sh $fastqDir
+	sh $havocSh $fastqDir
 	"""
 }
