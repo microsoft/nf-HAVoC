@@ -50,7 +50,7 @@ if [ -z $1 ] || [ $1 = "-help" ] || [ $1 = "-h" ]; then
     print_instructions
 fi
 #############################Check necessary files#############################
-path_to_files="$(printf $0 | sed "s/HAVoC.sh//g")"
+path_to_files="$(printf $0)"
 if ! [ -d "$1" ]; then
     printf "\e[1mError!\e[0m Given FASTQ directory doesn't exist.\n"
     print_instructions
@@ -66,7 +66,7 @@ if ! [ -f $reference ]; then
     print_instructions
 fi
 ################################Choose directory################################
-directory="$(printf $1 | sed "s/\/$//g")"
+directory="$(printf $1)"
 #########################Unzip files and shorten names#########################
 for old_name in $directory/*.fastq*; do
     if ! [ -f "$old_name" ]; then
@@ -99,22 +99,22 @@ else
 fi
 #############################Assembly and analyses#############################
 (
-    for fastq in $directory/*_R1.fastq*; do
+    for fastq in *_R1.fastq*; do
         start_time2="$(date +%s)"
-        print_fancy_box
+
         label="$(printf $fastq | sed "s/_R1.*//g" | sed "s/.*\///g")"
 
         if ! [ -f $directory/"$label"_R2.fastq* ]; then
             printf "Missing R2 FASTQ file for $label. Skipping assembly.\n\n" && continue
         fi
 
-        echo grep ">" $reference | sed "s/>.*/>$label/g" >$directory/"$label"_reference.fa
-        awk 'NR>1{printf "%s",$0}' $reference >>$directory/"$label"_reference.fa
+        echo grep ">" $reference | sed "s/>.*/>$label/g" > "$label"_reference.fa
+        awk 'NR>1{printf "%s",$0}' $reference >> "$label"_reference.fa
 
         if [ $tools_prepro = "fastp" ]; then
             printf "\e[4mRunning fastp...\n\e[0m"
             start_time3="$(date +%s)"
-            fastp --thread $thread_num -i $directory/"$label"_R1.fastq* -I $directory/"$label"_R2.fastq* -o $directory/"$label"_trimmed_1P -O $directory/"$label"_trimmed_2P --unpaired1 $directory/"$label"_trimmed_1U --unpaired2 $directory/"$label"_trimmed_2U -q 15 -u 40 -l 25 --cut_right --cut_window_size 20 --cut_mean_quality 30 --correction
+            fastp --thread $thread_num -i "$label"_R1.fastq* -I "$label"_R2.fastq* -o "$label"_trimmed_1P -O "$label"_trimmed_2P --unpaired1 "$label"_trimmed_1U --unpaired2 "$label"_trimmed_2U -q 15 -u 40 -l 25 --cut_right --cut_window_size 20 --cut_mean_quality 30 --correction
             #stop_time3="$(expr "$(date +%s)" - $start_time3)" && printf "fastp time : %.0f sec\n" $stop_time3
         else
             printf "\e[4mRunning Trimmomatic...\n\e[0m"
@@ -126,16 +126,16 @@ fi
         if [ $tools_aligner = "bwa" ]; then
             printf "\e[4m\nRunnning BWA-MEM...\n\e[0m"
             start_time3="$(date +%s)"
-            bwa index $directory/"$label"_reference.fa
-            bwa mem -t $thread_num -v 1 $directory/"$label"_reference.fa $directory/"$label"_trimmed_1P $directory/"$label"_trimmed_2P >$directory/"$label".sam
-            rm $directory/"$label"_trimmed_*
+            bwa index "$label"_reference.fa
+            bwa mem -t $thread_num -v 1 "$label"_reference.fa "$label"_trimmed_1P "$label"_trimmed_2P > "$label".sam
+            rm "$label"_trimmed_*
             # stop_time3="$(expr "$(date +%s)" - $start_time3)" && printf "BWA-MEM time : %.0f sec\n" $stop_time3
         else
             printf "\e[4m\nRunning Bowtie 2...\n\e[0m"
             start_time3="$(date +%s)"
-            bowtie2-build -q --threads $thread_num $directory/"$label"_reference.fa "$label"
-            bowtie2 -p $thread_num -x "$label" -1 $directory/"$label"_trimmed_1P -2 $directory/"$label"_trimmed_2P >$directory/"$label".sam
-            rm "$label"*.bt2 $directory/"$label"_trimmed_*
+            bowtie2-build -q --threads $thread_num "$label"_reference.fa "$label"
+            bowtie2 -p $thread_num -x "$label" -1 "$label"_trimmed_1P -2"$label"_trimmed_2P > "$label".sam
+            rm "$label"*.bt2 "$label"_trimmed_*
             stop_time3="$(expr "$(date +%s)" - $start_time3)"
             printf "Bowtie 2 time : %.0f min " "$(printf "$(expr $stop_time3 / 60)")"
             printf "%.0f sec\n\n" "$(printf "$(expr $stop_time3 % 60)")"
@@ -145,104 +145,96 @@ fi
         start_time3="$(date +%s)"
         if [ $tools_sam = "sambamba" ]; then
             start_time4="$(date +%s)"
-            sambamba view --sam-input -o $directory/"$label".bam -f bam -t $thread_num $directory/"$label".sam
-            sambamba sort -n -o $directory/"$label"_namesort.bam -t $thread_num $directory/"$label".bam
-            rm $directory/"$label".sam
+            sambamba view --sam-input -o "$label".bam -f bam -t $thread_num "$label".sam
+            sambamba sort -n -o "$label"_namesort.bam -t $thread_num "$label".bam
+            rm "$label".sam
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Sambamba sort time : %.0f sec\n" $stop_time4
 
             start_time4="$(date +%s)"
-            samtools fixmate -m $directory/"$label"_namesort.bam $directory/"$label"_fixmate.bam -@ $thread_num
+            samtools fixmate -m "$label"_namesort.bam "$label"_fixmate.bam -@ $thread_num
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Samtools fixmate time : %.0f sec\n" $stop_time4
 
             start_time4="$(date +%s)"
-            sambamba sort -o $directory/"$label"_sorted.bam --tmpdir $directory/"$label"_tmpdir -t $thread_num $directory/"$label"_fixmate.bam
+            sambamba sort -o "$label"_sorted.bam --tmpdir "$label"_tmpdir -t $thread_num "$label"_fixmate.bam
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Sambamba sort time : %.0f sec\n" $stop_time4
 
             start_time4="$(date +%s)"
-            sambamba markdup -r -t $thread_num --overflow-list-size=500000 $directory/"$label"_sorted.bam $directory/"$label"_markdup.bam
+            sambamba markdup -r -t $thread_num --overflow-list-size=500000 "$label"_sorted.bam "$label"_markdup.bam
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Sambamba markdup time : %.0f sec\n" $stop_time4
 
             start_time4="$(date +%s)"
-            sambamba index -t $thread_num $directory/"$label"_markdup.bam
+            sambamba index -t $thread_num "$label"_markdup.bam
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Samtools index time : %.0f sec\n\n" $stop_time4
             stop_time3="$(expr "$(date +%s)" - $start_time3)"
             printf "Sambamba/Samtools time : %.0f min " "$(printf "$(expr $stop_time3 / 60)")"
             printf "%.0f sec\n\n" "$(printf "$(expr $stop_time3 % 60)")"
         else
             start_time4="$(date +%s)"
-            samtools sort -n -O bam -o $directory/"$label"_namesort.bam $directory/"$label".sam -@ $thread_num
-            rm $directory/"$label".sam
+            samtools sort -n -O bam -o "$label"_namesort.bam "$label".sam -@ $thread_num
+            rm "$label".sam
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Samtools sort time : %.0f sec\n" $stop_time4
 
             start_time4="$(date +%s)"
-            samtools fixmate -m $directory/"$label"_namesort.bam $directory/"$label"_fixmate.bam -@ $thread_num
+            samtools fixmate -m "$label"_namesort.bam "$label"_fixmate.bam -@ $thread_num
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Samtools fixmate time : %.0f sec\n" $stop_time4
 
             start_time4="$(date +%s)"
-            samtools sort -O bam -o $directory/"$label"_sorted.bam -T $directory/"$label"_temp.txt $directory/"$label"_fixmate.bam -@ $thread_num
+            samtools sort -O bam -o "$label"_sorted.bam -T "$label"_temp.txt "$label"_fixmate.bam -@ $thread_num
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Samtools sort time : %.0f sec\n" $stop_time4
 
             start_time4="$(date +%s)"
             printf "\n"
-            samtools markdup -r -s $directory/"$label"_sorted.bam $directory/"$label"_markdup.bam -@ $thread_num
+            samtools markdup -r -s "$label"_sorted.bam "$label"_markdup.bam -@ $thread_num
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Samtools markdup time : %.0f sec\n" $stop_time4
 
             start_time4="$(date +%s)"
-            samtools index $directory/"$label"_markdup.bam -@ $thread_num
+            samtools index "$label"_markdup.bam -@ $thread_num
             stop_time4="$(expr "$(date +%s)" - $start_time4)" && printf "   Samtools index time : %.0f sec\n" $stop_time4
             stop_time3="$(expr "$(date +%s)" - $start_time3)" && printf "Samtools time : %.0f sec\n" $stop_time3
         fi
 
         printf "\e[4m\nMasking low coverage regions...\n\e[0m"
-        bedtools genomecov -ibam $directory/"$label"_markdup.bam -bga | awk -v cov="$min_coverage" '$4<cov' | bedtools merge -i - 1>$directory/"$label"_lowcovmask.bed
-        bedtools maskfasta -fi $directory/"$label"_reference.fa -bed $directory/"$label"_lowcovmask.bed -fo $directory/"$label"_reference_masked.fa
-        mv -f $directory/"$label"_reference_masked.fa $directory/"$label"_reference.fa
+        bedtools genomecov -ibam "$label"_markdup.bam -bga | awk -v cov="$min_coverage" '$4<cov' | bedtools merge -i - 1>"$label"_lowcovmask.bed
+        bedtools maskfasta -fi "$label"_reference.fa -bed "$label"_lowcovmask.bed -fo "$label"_reference_masked.fa
+        mv -f "$label"_reference_masked.fa "$label"_reference.fa
         printf "Masked cov<$min_coverage regions in "$label"_reference.fa\n"
 
         printf "\e[4m\nVariant calling with lofreq...\n\e[0m"
         start_time3="$(date +%s)"
-        lofreq indelqual $directory/"$label"_markdup.bam --dindel -f $directory/"$label"_reference.fa -o $directory/"$label"_indel.bam
-        samtools index $directory/"$label"_indel.bam -@ $thread_num
+        lofreq indelqual"$label"_markdup.bam --dindel -f "$label"_reference.fa -o "$label"_indel.bam
+        samtools index "$label"_indel.bam -@ $thread_num
         if [ $run_in_csc = "yes" ]; then
-            lofreq call-parallel --pp-threads $thread_num --call-indels -f $directory/"$label"_reference.fa -o $directory/"$label"_indel.vcf $directory/"$label"_indel.bam
+            lofreq call-parallel --pp-threads $thread_num --call-indels -f "$label"_reference.fa -o "$label"_indel.vcf "$label"_indel.bam
         else
-            lofreq call --call-indels -f $directory/"$label"_reference.fa -o $directory/"$label"_indel.vcf $directory/"$label"_indel.bam
+            lofreq call --call-indels -f "$label"_reference.fa -o "$label"_indel.vcf "$label"_indel.bam
         fi
-        lofreq filter -i $directory/"$label"_indel.vcf -o $directory/"$label"_indel_flt.vcf --af-min 0.5 --cov-min 10
+        lofreq filter -i "$label"_indel.vcf -o "$label"_indel_flt.vcf --af-min 0.5 --cov-min 10
 
-        bgzip -c $directory/"$label"_indel_flt.vcf 1>$directory/"$label"_indel_flt.vcf.gz
-        tabix $directory/"$label"_indel_flt.vcf.gz
-        bcftools consensus -f $directory/"$label"_reference.fa $directory/"$label"_indel_flt.vcf.gz -o $directory/"$label"_consensus.fa
+        bgzip -c "$label"_indel_flt.vcf 1> "$label"_indel_flt.vcf.gz
+        tabix "$label"_indel_flt.vcf.gz
+        bcftools consensus -f "$label"_reference.fa "$label"_indel_flt.vcf.gz -o "$label"_consensus.fa
         stop_time3="$(expr "$(date +%s)" - $start_time3)" && printf "Variant calling time : %.0f sec\n" $stop_time3
 
-        mkdir -p $directory/"$label"
 
         if [ $run_pangolin = "yes" ]; then
             if [ $run_in_csc = "yes" ]; then
                 printf "\e[4m\nLineage mapping with Pangolin...\n\e[0m"
                 start_time3="$(date +%s)"
-                pangolin $directory/"$label"_consensus.fa -o $directory/"$label" --outfile "$label"_pangolin_lineage.csv -t $thread_num #2>$directory/"$label"_pangolin.log
+                pangolin "$label"_consensus.fa -o "$label" --outfile "$label"_pangolin_lineage.csv -t $thread_num #2>$directory/"$label"_pangolin.log
                 stop_time3="$(expr "$(date +%s)" - $start_time3)"
                 printf "Pangolin time : %.0f min " "$(printf "$(expr $stop_time3 / 60)")"
                 printf "%.0f sec\n\n" "$(printf "$(expr $stop_time3 % 60)")"
             else
                 printf "\e[4m\nLineage mapping with Pangolin...\n\e[0m"
                 start_time3="$(date +%s)"
-                pangolin $directory/"$label"_consensus.fa -o $directory/"$label" --outfile "$label"_pangolin_lineage.csv -t $thread_num #2>$directory/"$label"_pangolin.log
+                pangolin "$label"_consensus.fa -o "$label" --outfile "$label"_pangolin_lineage.csv -t $thread_num #2>$directory/"$label"_pangolin.log
                 stop_time3="$(expr "$(date +%s)" - $start_time3)"
                 printf "Pangolin time : %.0f min " "$(printf "$(expr $stop_time3 / 60)")"
                 printf "%.0f sec\n\n" "$(printf "$(expr $stop_time3 % 60)")"
             fi
         fi
 
-        mv -f $directory/"$label"*bam $directory/"$label"
-        mv -f $directory/"$label"*vcf $directory/"$label"
-        mv -f $directory/"$label"_consensus.fa $directory/"$label"
-        mv -f $directory/"$label"_R*fastq* $directory/"$label"
-        mv -f $directory/"$label"_lowcovmask.bed $directory/"$label"
-        mv fastp.* $directory/"$label" >/dev/null 2>&1
-        rm -rf $directory/*"$label"_* "$label"_*
-        mv -f $directory/*"$label"_* $directory/"$label"
+
 
         stop_time1="$(expr "$(date +%s)" - $start_time2)"
         printf "━━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -257,6 +249,6 @@ fi
     printf "%.0f min " "$(printf "$(expr $stop_time2 / 60 % 60)")"
     printf "%.0f sec\n" "$(printf "$(expr $stop_time2 % 60)")"
     printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-) 2>&1 | tee $directory/"HAVoC_run.log"
+) 2>&1 | tee "HAVoC_run.log"
 #################################Stop and exit#################################
 exit
