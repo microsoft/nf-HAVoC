@@ -4,11 +4,11 @@
 log.info """\
  H A V o C -   P I P E L I N E
  ===================================
- nextera     : ${params.nextera}
+ nextera    : ${params.nextera}
  ref        : ${params.ref}
- reads   : ${params.reads}
- havocSh   : ${params.havocSh}
- outdir   : ${params.outdir}
+ reads      : ${params.reads}
+ havocSh    : ${params.havocSh}
+ outdir     : ${params.outdir}
  """
 
 
@@ -26,20 +26,20 @@ process runHavoc {
   publishDir "$outDir/$pair_id", mode: 'copy'
 
 	input:
-	path 'NexteraPE-PE.fa' from params.nextera
-	path 'ref.fa' from params.ref
+	path nextera from params.nextera
+	path ref from params.ref
 	tuple val(pair_id), path(reads) from read_pairs_ch
 	path havocSh from params.havocSh
 
   output:
-  file '*bam' into alignifEmpty()
-  file '*vcf' into csc.ifEmpty()
-  file '*_consensus.fa' into pangolin.ifEmpty()
-  file '*_R*fastq*' into fastqifEmpty()
-  file '*_lowcovmask.bed' into bed.ifEmpty()
-  path '*fastqp.*' into fastq.ifEmpty()
+  path '*bam'
+  path '*vcf'
+  path '*_consensus.fa'
+  path '*_R*fastq*'
+  path '*_lowcovmask.bed'
+  path '*fastqp.*'
 
 	"""
-	sh $havocSh $reads
+	sh $havocSh $reads $nextera $ref
 	"""
 }

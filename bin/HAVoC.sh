@@ -51,16 +51,16 @@ if [ -z $1 ] || [ $1 = "-help" ] || [ $1 = "-h" ]; then
 fi
 #############################Check necessary files#############################
 path_to_files="$(printf $0)"
-if ! [ -d "$1" ]; then
-    printf "\e[1mError!\e[0m Given FASTQ directory doesn't exist.\n"
+if ! [ -f "$1" ]; then
+    printf "\e[1mError!\e[0m Given FASTQ file doesn't exist.\n"
     print_instructions
 fi
-adapter="NexteraPE-PE.fa"
+adapter=$3
 if ! [ -f $adapter ]; then
     printf "\e[1mError!\e[0m Missing adapter file. Stopping assembly.\n"
     print_instructions
 fi
-reference="ref.fa"
+reference=$4
 if ! [ -f $reference ]; then
     printf "\e[1mError!\e[0m Missing reference file. Stopping assembly.\n"
     print_instructions
@@ -110,6 +110,7 @@ fi
 
         echo grep ">" $reference | sed "s/>.*/>$label/g" > "$label"_reference.fa
         awk 'NR>1{printf "%s",$0}' $reference >> "$label"_reference.fa
+
 
         if [ $tools_prepro = "fastp" ]; then
             printf "\e[4mRunning fastp...\n\e[0m"
