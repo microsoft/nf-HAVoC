@@ -4,11 +4,15 @@
 log.info """\
  H A V o C -   P I P E L I N E
  ===================================
+ reads      : ${params.reads}
  nextera    : ${params.nextera}
  ref        : ${params.ref}
- reads      : ${params.reads}
- havocSh    : ${params.havocSh}
  outdir     : ${params.outdir}
+ prepro     : ${params.prepro}
+ aligner    : ${params.aligner}
+ sam        : ${params.sam}
+ coverage   : ${params.coverage}
+ pangolin   : ${params.pangolin}
  """
 
 
@@ -21,13 +25,18 @@ log.info """\
      .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
      .set { read_pairs_ch }
 
+ Channel
+     .fromFilePairs( params.reads )
+     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
+     .set { read_pairs_ch }
+
 process runHavoc {
   tag "$pair_id"
   publishDir "$outDir/$pair_id", mode: 'copy'
 
 	input:
-	path nextera from params.nextera
-	path ref from params.ref
+	path nextera from nextera
+	path ref from ref
 	tuple val(pair_id), path(reads) from read_pairs_ch
 	path havocSh from params.havocSh
 
