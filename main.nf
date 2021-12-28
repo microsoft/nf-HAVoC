@@ -45,7 +45,6 @@ process runHavoc {
 	path nextera from nextera
 	path ref from ref
 	tuple val(pair_id), path(reads) from read_pairs_ch
-	path havocSh from params.havocSh
 
   output:
   path '*bam'
@@ -54,9 +53,9 @@ process runHavoc {
   path '*_R*fastq*'
   path '*_lowcovmask.bed'
   path 'fastp.*'
-  path '*csv'
+  path 'pangolearn_assignments.csv'
 
 	"""
-  bash $havocSh -n $nextera -r $ref -p $params.prepro -a $params.aligner -s $params.sam -m $params.coverage  -o $params.pangolin $reads
+  bash HAVoC.sh -n $nextera -r $ref -p $params.prepro -a $params.aligner -s $params.sam -m $params.coverage  -o $params.pangolin $reads
 	"""
 }
