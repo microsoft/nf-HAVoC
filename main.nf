@@ -25,10 +25,17 @@ log.info """\
      .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
      .set { read_pairs_ch }
 
- Channel
-     .fromFilePairs( params.reads )
-     .ifEmpty { error "Cannot find any reads matching: ${params.reads}" }
-     .set { read_pairs_ch }
+   // Check reference files exist
+  if (params.ref) {
+      ref = file(params.ref, checkIfExists: true)
+      if (ref.isEmpty()) {exit 1, "Reference file provided is empty : ${ch_ribo_db.getName()}!"}
+  }
+
+  // Check adapter files exist
+  if (params.nextera) {
+      nextera = file(params.nextera, checkIfExists: true)
+      if (nextera.isEmpty()) {exit 1, "Adapter file provided is empty : ${ch_ribo_db.getName()}!"}
+  }
 
 process runHavoc {
   tag "$pair_id"
@@ -46,9 +53,10 @@ process runHavoc {
   path '*_consensus.fa'
   path '*_R*fastq*'
   path '*_lowcovmask.bed'
-  path '*fastqp.*'
+  path 'fastp.*'
+  path '*csv'
 
 	"""
-	sh $havocSh $reads $nextera $ref
+  bash $havocSh -n $nextera -r $ref -p $params.prepro -a $params.aligner -s $params.sam -m $params.coverage  -o $params.pangolin $reads
 	"""
 }
