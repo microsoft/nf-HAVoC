@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 log.info """\
  H A V o C -   P I P E L I N E
