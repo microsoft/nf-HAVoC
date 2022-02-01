@@ -1,7 +1,7 @@
 # nf-HAVoC (Helsinki university Analyzer for Variants of Concern)
 
 ## Description
-**nf-HAVoC** is a bioinformatic pipeline designed to provide an accessible tool for constructing consensus sequences from SARS-CoV-2 FASTQ files and identifying the variants they belong to. The pipeline is a modification of HAVoC (DOI: https://doi.org/10.1186/s12859-021-04294-2) and built on [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible.
+**nf-HAVoC** is a bioinformatic pipeline designed to provide an accessible tool for constructing consensus sequences from SARS-CoV-2 FASTQ files and identifying the variants they belong to. The pipeline is an implementation of HAVoC (DOI: https://doi.org/10.1186/s12859-021-04294-2) and built on [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It uses Docker/Singularity containers making installation trivial and results highly reproducible.
 
 
 
