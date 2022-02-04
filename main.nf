@@ -56,8 +56,7 @@ process runHavoc {
   path '*_lowcovmask.bed'
   path 'fastp.*'
   path 'pangolearn_assignments.csv'
-
-	"""
+  """
   bash HAVoC.sh -n $nextera -r $ref -p $params.prepro -a $params.aligner -s $params.sam -m $params.coverage  -o $params.pangolin $reads
-	"""
+  """
 }
