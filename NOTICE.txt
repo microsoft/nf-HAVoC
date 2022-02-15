@@ -1,0 +1,6 @@
+Copyright (c) Microsoft Corporation.
+
+This project includes software developed by the University of the Helsinki.
+https://bitbucket.org/auto_cov_pipeline/havoc/src/master/
+
+Licensed under the GNU GPL.

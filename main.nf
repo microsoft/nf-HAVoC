@@ -1,5 +1,7 @@
 #!/usr/bin/env nextflow
 
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
 log.info """\
  H A V o C -   P I P E L I N E
@@ -57,7 +59,7 @@ process runHavoc {
 
 	"""
   bash HAVoC.sh -n $nextera -r $ref -p $params.prepro -a $params.aligner -s $params.sam -m $params.coverage  -o $params.pangolin $reads
-	"""
+  """
 }
 
 process MultiQC {
