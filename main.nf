@@ -37,25 +37,40 @@ log.info """\
       if (nextera.isEmpty()) {exit 1, "Adapter file provided is empty : ${ch_ribo_db.getName()}!"}
   }
 
+
 process runHavoc {
   tag "$pair_id"
-  publishDir "$outDir/$pair_id", mode: 'copy'
+  publishDir "${params.outdir}/$pair_id", mode: 'copy'
 
 	input:
-	path nextera from nextera
-	path ref from ref
-	tuple val(pair_id), path(reads) from read_pairs_ch
+  	path nextera from nextera
+  	path ref from ref
+  	tuple val(pair_id), path(reads) from read_pairs_ch
 
   output:
-  path '*bam'
-  path '*vcf'
-  path '*_consensus.fa'
-  path '*_R*fastq*'
-  path '*_lowcovmask.bed'
-  path 'fastp.*'
-  path 'pangolearn_assignments.csv'
+    path '*bam'
+    path '*vcf'
+    path '*_consensus.fa'
+    path '*_R*fastq*'
+    path '*_lowcovmask.bed'
+    path '*pangolearn_assignments.csv' into pangolinReport
 
 	"""
   bash HAVoC.sh -n $nextera -r $ref -p $params.prepro -a $params.aligner -s $params.sam -m $params.coverage  -o $params.pangolin $reads
 	"""
+}
+
+process MultiQC {
+    publishDir "${params.outdir}/MultiQC",  mode: 'copy'
+
+    input:
+        file ('lineage/*') from pangolinReport.collect()
+
+    output:
+        file "*multiqc_report.html" into ch_multiqc_report
+        file "*_data"
+
+    """
+    multiqc -f .
+    """
 }

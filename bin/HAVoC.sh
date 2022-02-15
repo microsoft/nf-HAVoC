@@ -83,9 +83,11 @@ awk 'NR>1{printf "%s",$0}' $reference >> "$label"_reference.fa
 if [ $tools_prepro = "fastp" ]; then
     printf "\e[4mRunning fastp...\n\e[0m"
     fastp --thread $thread_num -i "$label"_R1.fastq* -I "$label"_R2.fastq* -o "$label"_trimmed_1P -O "$label"_trimmed_2P --unpaired1 "$label"_trimmed_1U --unpaired2 "$label"_trimmed_2U -q 15 -u 40 -l 25 --cut_right --cut_window_size 20 --cut_mean_quality 30 --correction
+    mv fastp.html fastp_"$label".html
+    mv fastp.json fastp_"$label".json
 else
     printf "\e[4mRunning Trimmomatic...\n\e[0m"
-    trimmomatic PE -threads $thread_num -phred33 $directory/"$label"_R1.fastq* $directory/"$label"_R2.fastq* "$label"_trimmed_1P "$label"_trimmed_1U "$label"_trimmed_2P "$label"_trimmed_2U ILLUMINACLIP:$adapter:2:30:10 MINLEN:25 SLIDINGWINDOW:20:30
+    trimmomatic PE -threads $thread_num -phred33 $directory/"$label"_R1.fastq* $directory/"$label"_R2.fastq* "$label"_trimmed_1P "$label"_trimmed_1U "$label"_trimmed_2P "$label"_trimmed_2U ILLUMINACLIP:$adapter:2:30:10 MINLEN:25 SLIDINGWINDOW:20:30 2> "$label"_trim_out.log
 fi
 
 if [ $tools_aligner = "bwa" ]; then
@@ -145,6 +147,7 @@ bcftools consensus -f "$label"_reference.fa "$label"_indel_flt.vcf.gz -o "$label
 if [ $run_pangolin = "yes" ]; then
     printf "\e[4m\nLineage mapping with Pangolin...\n\e[0m"
     pangolin --no-temp "$label"_consensus.fa --outfile "$label"_pangolin_lineage.csv -t $thread_num
+    mv pangolearn_assignments.csv "$label"_pangolearn_assignments.csv
 fi
 
 
