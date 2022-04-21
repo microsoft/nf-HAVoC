@@ -1,5 +1,7 @@
 #!/bin/bash
 
+// File modified by Microsoft Corporation in 2022
+
 print_fancy_box() {
     label="$(printf $fastq | sed "s/.*\///g;s/_.*//g")"
     len="$(printf $label | wc -c)"
