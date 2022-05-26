@@ -56,7 +56,7 @@ process runHavoc {
     path '*_consensus.fa'
     path '*_R*fastq*'
     path '*_lowcovmask.bed'
-    path '*pangolearn_assignments.csv' into pangolinReport
+    path '*_pangolin_lineage.csv' into pangolinReport
 
 	"""
   bash HAVoC.sh -n $nextera -r $ref -p $params.prepro -a $params.aligner -s $params.sam -m $params.coverage  -o $params.pangolin $reads

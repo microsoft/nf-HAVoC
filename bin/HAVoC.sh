@@ -1,6 +1,6 @@
 #!/bin/bash
 
-// File modified by Microsoft Corporation in 2022
+# File modified by Microsoft Corporation in 2022
 
 print_fancy_box() {
     label="$(printf $fastq | sed "s/.*\///g;s/_.*//g")"
@@ -148,8 +148,7 @@ bcftools consensus -f "$label"_reference.fa "$label"_indel_flt.vcf.gz -o "$label
 
 if [ $run_pangolin = "yes" ]; then
     printf "\e[4m\nLineage mapping with Pangolin...\n\e[0m"
-    pangolin --no-temp "$label"_consensus.fa --outfile "$label"_pangolin_lineage.csv -t $thread_num
-    mv pangolearn_assignments.csv "$label"_pangolearn_assignments.csv
+    pangolin "$label"_consensus.fa --no-temp --outfile "$label"_pangolin_lineage.csv -t $thread_num
 fi
 
 
